@@ -7,9 +7,11 @@ const event_lookup_1 = require("./modules/event_lookup");
 const network_status_1 = require("./modules/network_status");
 const transaction_status_1 = require("./modules/transaction_status");
 const address_exists_lookup_1 = require("./modules/address_exists_lookup");
+const token_discovery_1 = require("./modules/token_discovery");
 const ID = "qubic";
 const modules = {
     balanceLookup: balance_lookup_1.balanceLookup,
+    tokenDiscovery: token_discovery_1.tokenDiscovery,
     eventLookup: event_lookup_1.eventLookup,
     networkStatus: network_status_1.networkStatus,
     transactionStatus: transaction_status_1.transactionStatus,

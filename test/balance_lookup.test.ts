@@ -34,4 +34,22 @@ describe('Balance Lookup', () => {
     chai.expect(parseInt(result?.value!)).to.equal(0)
     chai.expect(result?.exists).to.be.false
   });  
+
+  it('should provide a balance', async () => {
+    const blockchain: Blockchains = Blockchains.QUBIC
+    const assetType: AssetTypes = AssetTypes.NATIVE
+    const assetId: string = '0'
+    const addrXpub: string = 'EMSSYMCBMVXSSBZZDFFNLYTVZBVBWQNAWIEDYZLBDCFYIBAKFUOOGWLAEXCL'    
+    let resp = await balanceLookup(createContext('Balance'), {
+      blockchain, assetType, assetId, addrXpub
+    })
+    console.log('response', resp)
+    isObject(resp)
+    let result = resp.value
+    chai.expect(parseInt(result?.value!)).to.be.greaterThan(0)
+    chai.expect(result?.exists).to.be.true    
+    
+  })
+
+
 });

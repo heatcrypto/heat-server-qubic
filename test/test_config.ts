@@ -1,6 +1,6 @@
 import { MonitoredRequest, CallContext, createLogger } from 'heat-server-common';
 
-/// Heat
+/// Qubic
 export const testConfig = {
   protocol: 'https',
   host: 'testapi.qubic.org'

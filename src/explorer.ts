@@ -5,6 +5,7 @@ import { networkStatus } from './modules/network_status';
 import { transactionStatus } from './modules/transaction_status'
 import { ModuleProvider } from 'heat-server-common/dist/types/module_provider.interface';
 import { addressExistsLookup } from './modules/address_exists_lookup';
+import { tokenDiscovery } from './modules/token_discovery';
 
 /* ------------------- Configuration Start ------------------- */
 
@@ -14,6 +15,7 @@ const ID = "qubic"
 // Must list all exposed/implemented modules 
 const modules: ModuleProvider = {
   balanceLookup,
+  tokenDiscovery,
   eventLookup,
   networkStatus,
   transactionStatus,
