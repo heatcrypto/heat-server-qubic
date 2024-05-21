@@ -21,8 +21,14 @@ exports.getTickDataResponse = getTickDataResponse;
 async function networkStatus(context, param) {
     try {
         const latestTick = await getLatestTickResponse(context);
-        const tickData = await getTickDataResponse(context, latestTick.latestTick);
-        const timestamp = parseInt(tickData.tickData.timestamp);
+        let timestamp = 0;
+        try {
+            const tickData = await getTickDataResponse(context, latestTick.latestTick);
+            timestamp = parseInt(tickData.tickData.timestamp);
+        }
+        catch (e) {
+            context.logger.error(e);
+        }
         return {
             value: {
                 lastBlockTime: new Date(timestamp),

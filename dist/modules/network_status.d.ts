@@ -1,4 +1,4 @@
-import { NetworkStatusParam, NetworkStatusResult, CallContext, ModuleResponse } from 'heat-server-common';
+import { NetworkStatusParam, NetworkStatusResult, CallContext, ModuleResponse } from "heat-server-common";
 export interface LatestTickResponse {
     latestTick: number;
 }
