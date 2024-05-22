@@ -8,7 +8,7 @@ async function broadcastTransaction(context, transactionHex) {
     const { req, protocol, host, logger } = context;
     const url = `${protocol}://${host}/v1/broadcast-transaction`;
     const json = await req.post(url, {
-        body: JSON.stringify({ encodedTransaction: transactionHex }),
+        body: JSON.stringify({ encodedTransaction: hexToBase64(transactionHex) }),
     });
     const data = (0, heat_server_common_1.tryParse)(json, logger);
     return data;
@@ -45,4 +45,12 @@ async function broadcast(context, param) {
     }
 }
 exports.broadcast = broadcast;
+function hexToBase64(hexString) {
+    const byteArray = new Uint8Array(hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+    let binaryString = '';
+    byteArray.forEach((byte) => {
+        binaryString += String.fromCharCode(byte);
+    });
+    return btoa(binaryString);
+}
 //# sourceMappingURL=broadcast.js.map

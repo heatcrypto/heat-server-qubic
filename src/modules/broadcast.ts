@@ -19,7 +19,7 @@ async function broadcastTransaction(
   const { req, protocol, host, logger } = context;
   const url = `${protocol}://${host}/v1/broadcast-transaction`;
   const json = await req.post(url, {
-    body: JSON.stringify({ encodedTransaction: transactionHex }),
+    body: JSON.stringify({ encodedTransaction: hexToBase64(transactionHex) }),
   });
   const data: BroadcastResponse = tryParse(json, logger);
   return data;
@@ -61,4 +61,18 @@ export async function broadcast(
       error: e.message,
     };
   }
+}
+
+function hexToBase64(hexString) {
+  // Convert the hex string to a byte array
+  const byteArray = new Uint8Array(hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+
+  // Create a string from the byte array
+  let binaryString = '';
+  byteArray.forEach((byte) => {
+      binaryString += String.fromCharCode(byte);
+  });
+
+  // Convert the binary string to a Base64 string
+  return btoa(binaryString);
 }
