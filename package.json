@@ -25,6 +25,7 @@
     "heat-server-common": "heatcrypto/heat-server-common#master",
     "lodash": "^4.17.20",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^6.6.2"
+    "rxjs": "^6.6.2",
+    "heat-wallet-qubic": "heatcrypto/heat-wallet-qubic#master"
   }
 }
