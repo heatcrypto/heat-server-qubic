@@ -9,6 +9,7 @@ const transaction_status_1 = require("./modules/transaction_status");
 const address_exists_lookup_1 = require("./modules/address_exists_lookup");
 const token_discovery_1 = require("./modules/token_discovery");
 const broadcast_1 = require("./modules/broadcast");
+const block_lookup_1 = require("./modules/block_lookup");
 const ID = "qubic";
 const modules = {
     balanceLookup: balance_lookup_1.balanceLookup,
@@ -18,6 +19,7 @@ const modules = {
     transactionStatus: transaction_status_1.transactionStatus,
     addressExistsLookup: address_exists_lookup_1.addressExistsLookup,
     broadcast: broadcast_1.broadcast,
+    blockLookup: block_lookup_1.blockLookup,
 };
 class Explorer extends heat_server_common_1.ExplorerBase {
     constructor(protocol, host, rateLimiter, apiKey, middleWare) {

@@ -7,6 +7,7 @@ import { ModuleProvider } from 'heat-server-common/dist/types/module_provider.in
 import { addressExistsLookup } from './modules/address_exists_lookup';
 import { tokenDiscovery } from './modules/token_discovery';
 import { broadcast } from './modules/broadcast';
+import { blockLookup } from './modules/block_lookup';
 
 /* ------------------- Configuration Start ------------------- */
 
@@ -22,6 +23,7 @@ const modules: ModuleProvider = {
   transactionStatus,
   addressExistsLookup,
   broadcast,
+  blockLookup,
 }
 
 /* ------------------- Configuration End --------------------- */
