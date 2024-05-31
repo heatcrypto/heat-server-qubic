@@ -13,4 +13,12 @@ describe('Block Lookup Test', () => {
     let result = resp.value
     isObject(result)
   });
+
+  it('cannot fetch a block from the future', async () => {
+    let resp = await blockLookup(createContext('Block'), { blockchain: Blockchains.QUBIC, height: 94053145 })
+    console.log(JSON.stringify(resp,null,2))
+    isObject(resp)
+    let result = resp.value
+    isObject(result)
+  });  
 });

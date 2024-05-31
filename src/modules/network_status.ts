@@ -6,8 +6,14 @@ import {
   ModuleResponse,
 } from "heat-server-common";
 
-export interface LatestTickResponse {
-  latestTick: number;
+// export interface LatestTickResponse {
+//   latestTick: number;
+// }
+
+export interface StatusResponse {
+  lastProcessedTick: {
+    tickNumber: number
+  }
 }
 
 export interface TickDataResponse {
@@ -24,15 +30,25 @@ export interface TickDataResponse {
   };
 }
 
-export async function getLatestTickResponse(
+export async function geStatusResponse(
   context: CallContext
-): Promise<LatestTickResponse> {
+): Promise<StatusResponse> {
   const { req, protocol, host, logger } = context;
-  const url = `${protocol}://${host}/v1/latestTick`;
+  const url = `${protocol}://${host}/v1/status`;
   const json = await req.get(url);
-  const data: LatestTickResponse = tryParse(json, logger);
+  const data: StatusResponse = tryParse(json, logger);
   return data;
 }
+
+// export async function getLatestTickResponse(
+//   context: CallContext
+// ): Promise<LatestTickResponse> {
+//   const { req, protocol, host, logger } = context;
+//   const url = `${protocol}://${host}/v1/latestTick`;
+//   const json = await req.get(url);
+//   const data: LatestTickResponse = tryParse(json, logger);
+//   return data;
+// }
 
 export async function getTickDataResponse(
   context: CallContext,
@@ -50,14 +66,15 @@ export async function networkStatus(
   param: NetworkStatusParam
 ): Promise<ModuleResponse<NetworkStatusResult>> {
   try {
-    const latestTick = await getLatestTickResponse(context);
+    // const latestTick = await getLatestTickResponse(context);
+    const status = await geStatusResponse(context)
 
     // The rpc server/syncer might throw an error when the latest tick has not been procesed yet.
     let timestamp = 0;
     try {
       const tickData = await getTickDataResponse(
         context,
-        latestTick.latestTick
+        status.lastProcessedTick.tickNumber,
       );
       timestamp = parseInt(tickData.tickData.timestamp);
     } catch (e) {
@@ -66,8 +83,8 @@ export async function networkStatus(
     return {
       value: {
         lastBlockTime: new Date(timestamp),
-        lastBlockHeight: latestTick.latestTick,
-        lastBlockId: `${latestTick.latestTick}`,
+        lastBlockHeight: status.lastProcessedTick.tickNumber,
+        lastBlockId: `${status.lastProcessedTick.tickNumber}`,
       },
     };
   } catch (e) {

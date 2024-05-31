@@ -5,8 +5,7 @@ import {
   CallContext,
   ModuleResponse,
 } from "heat-server-common";
-import { isNumber } from "lodash";
-import { getLatestTickResponse, getTickDataResponse } from "./network_status";
+import { geStatusResponse } from "./network_status";
 
 interface TransactionStatusResponse {
   transaction: {
@@ -32,8 +31,8 @@ async function getTransactionStatusResponse(context: CallContext, txId: string):
 
 async function getTransactionStatusResult(context: CallContext, txId: string): Promise<TransactionStatusResult> {
   const transactionStatus = await getTransactionStatusResponse(context, txId)
-  const latestTick = await getLatestTickResponse(context)
-  const confirmations = latestTick.latestTick - transactionStatus.transaction.tickNumber
+  const tickStatus = await geStatusResponse(context)
+  const confirmations = tickStatus.lastProcessedTick.tickNumber - transactionStatus.transaction.tickNumber
   return {
     confirmations,
     isAccepted: true,

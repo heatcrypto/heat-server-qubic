@@ -1,6 +1,8 @@
 import { NetworkStatusParam, NetworkStatusResult, CallContext, ModuleResponse } from "heat-server-common";
-export interface LatestTickResponse {
-    latestTick: number;
+export interface StatusResponse {
+    lastProcessedTick: {
+        tickNumber: number;
+    };
 }
 export interface TickDataResponse {
     tickData: {
@@ -15,6 +17,6 @@ export interface TickDataResponse {
         signatureHex: string;
     };
 }
-export declare function getLatestTickResponse(context: CallContext): Promise<LatestTickResponse>;
+export declare function geStatusResponse(context: CallContext): Promise<StatusResponse>;
 export declare function getTickDataResponse(context: CallContext, tickNumber: number): Promise<TickDataResponse>;
 export declare function networkStatus(context: CallContext, param: NetworkStatusParam): Promise<ModuleResponse<NetworkStatusResult>>;

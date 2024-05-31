@@ -12,8 +12,8 @@ async function getTransactionStatusResponse(context, txId) {
 }
 async function getTransactionStatusResult(context, txId) {
     const transactionStatus = await getTransactionStatusResponse(context, txId);
-    const latestTick = await (0, network_status_1.getLatestTickResponse)(context);
-    const confirmations = latestTick.latestTick - transactionStatus.transaction.tickNumber;
+    const tickStatus = await (0, network_status_1.geStatusResponse)(context);
+    const confirmations = tickStatus.lastProcessedTick.tickNumber - transactionStatus.transaction.tickNumber;
     return {
         confirmations,
         isAccepted: true,
