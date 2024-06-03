@@ -1,4 +1,4 @@
-import { RateLimiterClass, ExplorerMiddleware, ExplorerBase } from 'heat-server-common'
+import { RateLimiterClass, ExplorerMiddleware, ExplorerBase, CreateCoreOptions, MonitoredRequestFactory } from 'heat-server-common'
 import { balanceLookup } from './modules/balance_lookup';
 import { eventLookup } from './modules/event_lookup';
 import { networkStatus } from './modules/network_status';
@@ -35,7 +35,9 @@ export class Explorer extends ExplorerBase {
     public rateLimiter: RateLimiterClass,
     apiKey?: string,
     middleWare?: ExplorerMiddleware,
+    createCoreOptions?: CreateCoreOptions,
+    monitoredRequestFactory?: MonitoredRequestFactory
   ) {
-    super(ID, protocol, host, modules, middleWare)
+    super(ID, protocol, host, modules, middleWare, createCoreOptions, monitoredRequestFactory)
   }
 }

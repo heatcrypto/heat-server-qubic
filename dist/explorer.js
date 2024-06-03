@@ -22,8 +22,8 @@ const modules = {
     blockLookup: block_lookup_1.blockLookup,
 };
 class Explorer extends heat_server_common_1.ExplorerBase {
-    constructor(protocol, host, rateLimiter, apiKey, middleWare) {
-        super(ID, protocol, host, modules, middleWare);
+    constructor(protocol, host, rateLimiter, apiKey, middleWare, createCoreOptions, monitoredRequestFactory) {
+        super(ID, protocol, host, modules, middleWare, createCoreOptions, monitoredRequestFactory);
         this.host = host;
         this.rateLimiter = rateLimiter;
     }
