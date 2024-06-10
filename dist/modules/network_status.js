@@ -5,7 +5,7 @@ const heat_server_common_1 = require("heat-server-common");
 async function geStatusResponse(context) {
     const { req, protocol, host, logger } = context;
     const url = `${protocol}://${host}/v1/status`;
-    const json = await req.get(url);
+    const json = await req.get(url, null, [200]);
     const data = (0, heat_server_common_1.tryParse)(json, logger);
     return data;
 }

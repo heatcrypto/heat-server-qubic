@@ -54,8 +54,9 @@ export interface OwnedAssetsResponse {
 export async function getOwnedAssetsResponse(context: CallContext, addrXpub: string): Promise<OwnedAssetsResponse> {
   const { req, protocol, host, logger } = context
   const url = `${protocol}://${host}/v1/assets/${addrXpub}/owned`;
-  const json = await req.get(url);
+  const json = await req.get(url, null, [200]);
   const data: OwnedAssetsResponse = tryParse(json, logger);
+  console.log(JSON.stringify(data, null, 2))
   return data;
 }
 

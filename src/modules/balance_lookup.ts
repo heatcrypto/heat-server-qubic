@@ -14,7 +14,7 @@ export interface BalanceResponse {
 export async function getBalanceResponse(context: CallContext, addrXpub: string): Promise<BalanceResponse> {
   const { req, protocol, host, logger } = context
   const url = `${protocol}://${host}/v1/balances/${addrXpub}`;
-  const json = await req.get(url);
+  const json = await req.get(url, null, [200]);
   const data: BalanceResponse = tryParse(json, logger);
   return data;
 }

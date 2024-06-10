@@ -9,7 +9,7 @@ async function broadcastTransaction(context, transactionHex) {
     const url = `${protocol}://${host}/v1/broadcast-transaction`;
     const json = await req.post(url, {
         body: JSON.stringify({ encodedTransaction: hexToBase64(transactionHex) }),
-    });
+    }, [200, 201]);
     const data = (0, heat_server_common_1.tryParse)(json, logger);
     return data;
 }

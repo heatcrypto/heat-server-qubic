@@ -35,7 +35,7 @@ export async function getApprovedTransactionsResponse(
 ): Promise<ApprovedTransactionsResponse> {
   const { req, protocol, host, logger } = context;
   const url = `${protocol}://${host}/v1/ticks/${tickNumber}/approved-transactions`;
-  const json = await req.get(url);
+  const json = await req.get(url, null, [200]);
   const data: ApprovedTransactionsResponse = tryParse(json, logger);
   return data;
 }

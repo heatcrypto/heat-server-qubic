@@ -7,8 +7,9 @@ const lodash_1 = require("lodash");
 async function getOwnedAssetsResponse(context, addrXpub) {
     const { req, protocol, host, logger } = context;
     const url = `${protocol}://${host}/v1/assets/${addrXpub}/owned`;
-    const json = await req.get(url);
+    const json = await req.get(url, null, [200]);
     const data = (0, heat_server_common_1.tryParse)(json, logger);
+    console.log(JSON.stringify(data, null, 2));
     return data;
 }
 exports.getOwnedAssetsResponse = getOwnedAssetsResponse;

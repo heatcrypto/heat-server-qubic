@@ -24,7 +24,7 @@ interface TransactionStatusResponse {
 async function getTransactionStatusResponse(context: CallContext, txId: string): Promise<TransactionStatusResponse> {
   const { req, protocol, host, logger } = context;
   const url = `${protocol}://${host}/v1/transactions/${txId}`;
-  const json = await req.get(url);
+  const json = await req.get(url, null, [200]);
   const transaction = tryParse(json, logger);
   return transaction
 }

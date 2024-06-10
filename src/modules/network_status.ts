@@ -35,7 +35,7 @@ export async function geStatusResponse(
 ): Promise<StatusResponse> {
   const { req, protocol, host, logger } = context;
   const url = `${protocol}://${host}/v1/status`;
-  const json = await req.get(url);
+  const json = await req.get(url, null, [200]);
   const data: StatusResponse = tryParse(json, logger);
   return data;
 }

@@ -52,7 +52,7 @@ async function getTransferTransactionsPerTickResponse(
 ) {
   const { req, protocol, host, logger } = context;
   const url = `${protocol}://${host}/v1/identities/${addrXpub}/transfer-transactions?startTick=${startTick}&endTick=${endTick}`;
-  const json = await req.get(url);
+  const json = await req.get(url, null, [200]);
   const data: TransferTransactionsPerTickResponse = tryParse(json, logger);
   return data;
 }

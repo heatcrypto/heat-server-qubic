@@ -6,7 +6,7 @@ const network_status_1 = require("./network_status");
 async function getTransactionStatusResponse(context, txId) {
     const { req, protocol, host, logger } = context;
     const url = `${protocol}://${host}/v1/transactions/${txId}`;
-    const json = await req.get(url);
+    const json = await req.get(url, null, [200]);
     const transaction = (0, heat_server_common_1.tryParse)(json, logger);
     return transaction;
 }

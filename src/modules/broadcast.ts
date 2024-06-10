@@ -20,7 +20,7 @@ async function broadcastTransaction(
   const url = `${protocol}://${host}/v1/broadcast-transaction`;
   const json = await req.post(url, {
     body: JSON.stringify({ encodedTransaction: hexToBase64(transactionHex) }),
-  });
+  }, [200,201]);
   const data: BroadcastResponse = tryParse(json, logger);
   return data;
 }

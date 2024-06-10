@@ -9,7 +9,11 @@ describe('Token Discovery', () => {
   it('should work', async () => {
     const blockchain: Blockchains = Blockchains.QUBIC
     const assetType: AssetTypes = AssetTypes.NATIVE
-    const addrXpub: string = 'IGJQYTMFLVNIMEAKLANHKGNGZPFCFJGSMVOWMNGLWCZWKFHANHGCBYODMKBC'
+    // const addrXpub: string = 'IGJQYTMFLVNIMEAKLANHKGNGZPFCFJGSMVOWMNGLWCZWKFHANHGCBYODMKBC'
+    // const addrXpub: string = 'XLEKUDKWFPJAQGDXAQNAIWUUOHEDVQNNFDYDNGHLBEOUZDGHJTCHCPFEXFLD'
+    const addrXpub: string = 'EOKXREPZIQRTTDHZUTVDGBUBIWVATNGUGCTOUWAJWBAVQWQZESDHQSTAVGQN' // <-- this address has all assets
+    
+    
     const context = createContext('Token')
     let resp = await tokenDiscovery(context, {
       blockchain, assetType, addrXpub
@@ -28,7 +32,7 @@ describe('Token Discovery', () => {
   });
   // it('does assets', async () => {
   //   const context = createContext('Token')
-  //   const result = await assetDiscovery(context, 'IGJQYTMFLVNIMEAKLANHKGNGZPFCFJGSMVOWMNGLWCZWKFHANHGCBYODMKBC')
+  //   const result = await tokenDiscovery(context, 'IGJQYTMFLVNIMEAKLANHKGNGZPFCFJGSMVOWMNGLWCZWKFHANHGCBYODMKBC')
   //   console.log('assets', result)
   // })
 });
