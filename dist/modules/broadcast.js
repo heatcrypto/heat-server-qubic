@@ -9,7 +9,7 @@ async function broadcastTransaction(context, transactionHex) {
     const url = `${protocol}://${host}/v1/broadcast-transaction`;
     const json = await req.post(url, {
         body: JSON.stringify({ encodedTransaction: hexToBase64(transactionHex) }),
-    }, [200, 201]);
+    }, [200, 201, 400]);
     const data = (0, heat_server_common_1.tryParse)(json, logger);
     return data;
 }
@@ -27,6 +27,13 @@ async function broadcast(context, param) {
                     coinSpecificResult: {
                         peersBroadcasted: data.peersBroadcasted
                     }
+                },
+            };
+        }
+        else if ((0, lodash_1.isObjectLike)(data) && (0, lodash_1.isString)(data.message) && (0, lodash_1.isNumber)(data.code)) {
+            return {
+                value: {
+                    errorMessage: data.message,
                 },
             };
         }

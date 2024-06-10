@@ -5,11 +5,14 @@ import {
   CallContext,
   ModuleResponse,
 } from "heat-server-common";
-import { isObjectLike, isNumber } from "lodash";
+import { isObjectLike, isNumber, isString } from "lodash";
 import { qubicReady, getTransactionId } from "heat-wallet-qubic/dist/bundle.cjs";
 
 interface BroadcastResponse {
-  peersBroadcasted: number;
+  peersBroadcasted?: number;
+  // error response status=400
+  code?: number;
+  message?: string;
 }
 
 async function broadcastTransaction(
@@ -20,7 +23,7 @@ async function broadcastTransaction(
   const url = `${protocol}://${host}/v1/broadcast-transaction`;
   const json = await req.post(url, {
     body: JSON.stringify({ encodedTransaction: hexToBase64(transactionHex) }),
-  }, [200,201]);
+  }, [200,201,400]);
   const data: BroadcastResponse = tryParse(json, logger);
   return data;
 }
@@ -49,7 +52,15 @@ export async function broadcast(
           }
         },
       };
-    } else {
+    } else if (isObjectLike(data) && isString(data.message) && isNumber(data.code) ) {
+      // status = 400
+      return {
+        value: {
+          errorMessage: data.message,
+        },
+      };
+    }
+    else {
       return {
         value: {
           errorMessage: 'Failed',
