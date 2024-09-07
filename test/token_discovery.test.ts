@@ -11,7 +11,8 @@ describe('Token Discovery', () => {
     const assetType: AssetTypes = AssetTypes.NATIVE
     // const addrXpub: string = 'IGJQYTMFLVNIMEAKLANHKGNGZPFCFJGSMVOWMNGLWCZWKFHANHGCBYODMKBC'
     // const addrXpub: string = 'XLEKUDKWFPJAQGDXAQNAIWUUOHEDVQNNFDYDNGHLBEOUZDGHJTCHCPFEXFLD'
-    const addrXpub: string = 'EOKXREPZIQRTTDHZUTVDGBUBIWVATNGUGCTOUWAJWBAVQWQZESDHQSTAVGQN' // <-- this address has all assets
+    //const addrXpub: string = 'EOKXREPZIQRTTDHZUTVDGBUBIWVATNGUGCTOUWAJWBAVQWQZESDHQSTAVGQN' // <-- this address has all assets
+    const addrXpub: string = 'APSCCECDBJTEXEVXWHSJCRMKDPFCWOWWVITNTPIPWDSEUMKEUYLYJLTCYIYA' // <-- has single asset
     
     
     const context = createContext('Token')

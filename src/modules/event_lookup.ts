@@ -9,86 +9,75 @@ import {
   buildEventReceive,
   AssetTypes,
   buildEventSend,
+  buildEventFee,
 } from "heat-server-common";
+import { isBoolean, isNumber } from "lodash";
+import {
+  QubicTransactionsResponse,
+  QubicTransactionsWrapper,
+} from "./event_lookup_interfaces";
+import { LRUCache } from "../utils";
+import BigNumber from 'bignumber.js'
 
-const TYPE_PAYMENT = 0;
-
-export interface TransferTransactionsPerTickResponse {
-  transferTransactionsPerTick: Array<{
-    tickNumber: number;
-    identity: string;
-    transactions: Array<{
-      sourceId: string;
-      destId: string;
-      amount: string;
-      tickNumber: number;
-      inputType: number;
-      inputSize: number;
-      inputHex: string;
-      signatureHex: string;
-      txId: string;
-    }>;
-  }>;
+// LRU cache for tracking pagination between requests
+interface PaginationCache {
+  nextEndTick: number | null;
+  nextTxnIndexStart: number | null;
 }
+const cacheSizeLimit = 1000;
+const paginationCache = new LRUCache<string, PaginationCache>(cacheSizeLimit);
 
-export interface FlatTransfer {
-  tickNumber: number;
-  sender: string;
-  recipient: string;
-  amount: string;
-  txId: string;
-  type: number;
-  timestamp: number;
-  confirmations: number;
-}
-
-// v1/identities/YROXPGAQMWOWTEFEWUVTGPVUOECCTXZYGMOXHHRBHGCYPOGSYVZLYLOECDZA/transfer-transactions?startTick=13960216&endTick=13960691
-
-async function getTransferTransactionsPerTickResponse(
+async function getAssetTransactions(
   context: CallContext,
-  addrXpub: string,
-  startTick: number,
-  endTick: number
+  filter: {
+    addrXpub: string;
+    assetIssuer: string;
+    assetName: string;
+    endTick: number;
+    txnIndexStart: number;
+    maxTransactions: number;
+    includeFailedTransactions: boolean;
+  }
 ) {
   const { req, protocol, host, logger } = context;
-  const url = `${protocol}://${host}/v1/identities/${addrXpub}/transfer-transactions?startTick=${startTick}&endTick=${endTick}`;
+  const { addrXpub, assetIssuer, assetName, endTick, txnIndexStart } = filter;
+  const maxTransactions = isNumber(filter.maxTransactions)
+    ? filter.maxTransactions
+    : 100;
+  const includeFailedTransactions = isBoolean(filter.includeFailedTransactions)
+    ? filter.includeFailedTransactions
+    : true;
+
+  let url = `${protocol}://${host}/v2/identities/${addrXpub}/${assetIssuer}/${assetName}/asset-transactions?maxTransactions=${maxTransactions}&includeFailedTransactions=${includeFailedTransactions}`;
+  url += `${isNumber(endTick) ? `&endTick=${endTick}` : ""}`;
+  url += `${isNumber(txnIndexStart) ? `&txnIndexStart=${txnIndexStart}` : ""}`;
   const json = await req.get(url, null, [200]);
-  const data: TransferTransactionsPerTickResponse = tryParse(json, logger);
+  const data: QubicTransactionsResponse = tryParse(json, logger);
   return data;
 }
 
-async function getTransfers(
-  context: CallContext,
-  addrXpub: string,
-  startTick: number,
-  endTick: number
-): Promise<Array<FlatTransfer>> {
-  const data = await getTransferTransactionsPerTickResponse(
-    context,
-    addrXpub,
-    startTick,
-    endTick
-  );
-  if (data) {
-    const result: Array<FlatTransfer> = [];
-    data.transferTransactionsPerTick.forEach((transferTransaction) => {
-      transferTransaction.transactions.forEach((transaction) => {
-        result.push({
-          tickNumber: transaction.tickNumber,
-          sender: transaction.sourceId,
-          recipient: transaction.destId,
-          amount: transaction.amount,
-          txId: transaction.txId,
-          type: TYPE_PAYMENT,
-          timestamp: 1,
-          confirmations: 1,
-        });
-      });
-    });
-    return result;
+const createRequestIdForCache = (addrXpub, assetType, assetId) =>
+  `${addrXpub}:${assetType}:${assetId}`;
+const getAssetIssuerAndAssetName = (
+  assetType: AssetTypes,
+  assetId: string
+): { assetIssuer: string; assetName: string } => {
+  if (assetType == AssetTypes.NATIVE) {
+    return {
+      assetIssuer: "0",
+      assetName: "0",
+    };
+  } else if (assetType == AssetTypes.TOKEN_TYPE_1) {
+    const parts = assetId.split(":");
+    if (parts.length == 2) {
+      return {
+        assetName: parts[0],
+        assetIssuer: parts[1],
+      };
+    }
   }
-  return [];
-}
+  return null;
+};
 
 export async function eventLookup(
   context: CallContext,
@@ -97,33 +86,74 @@ export async function eventLookup(
   try {
     const { blockchain, assetType, assetId, addrXpub, from, to, minimal } =
       param;
-    if (from > 0) {
+    const parsedAssetId = getAssetIssuerAndAssetName(assetType, assetId);
+    if (!parsedAssetId) {
       return {
-        value: [],
+        error: "Invalid assetType and or assetId",
       };
     }
 
-    const data = await getTransfers(context, addrXpub, 1, 999999999);
+    const requestId = createRequestIdForCache(addrXpub, assetType, assetId);
+    if (from === 0) {
+      paginationCache.set(requestId, {
+        nextEndTick: null,
+        nextTxnIndexStart: null,
+      });
+    }
+
+    let cache = paginationCache.get(requestId);
+    if (!cache) {
+      cache = { nextEndTick: null, nextTxnIndexStart: null };
+      paginationCache.set(requestId, cache);
+    }
+
+    const filter = {
+      addrXpub,
+      assetIssuer: parsedAssetId.assetIssuer,
+      assetName: parsedAssetId.assetName,
+      endTick: cache.nextEndTick,
+      txnIndexStart: cache.nextTxnIndexStart,
+      maxTransactions: to - from + 1,
+      includeFailedTransactions: true,
+    };
+    const data = await getAssetTransactions(context, filter);
+    if (
+      !data ||
+      !isNumber(data.nextEndTick) ||
+      !isNumber(data.nextTxnIndexStart)
+    ) {
+      return {
+        error: "Invalid response",
+      };
+    }
+
+    // remember pagination postion for next request
+    paginationCache.set(requestId, {
+      nextEndTick: data.nextEndTick,
+      nextTxnIndexStart: data.nextTxnIndexStart,
+    });
 
     let value;
     // Go after minimal result
     if (minimal) {
-      value = data.map((x) => x.txId);
+      value = data.transactions.map((wrapper) => wrapper.transaction.txId);
     }
     // Go after FULL result
     else {
       value = [];
-      for (let i = 0; i < data.length; i++) {
-        let txData = data[i];
-        let events = getEventsFromTransaction(txData, addrXpub);
+      for (let i = 0; i < data.transactions.length; i++) {
+        let txnWrapper = data.transactions[i];
+        let events = getEventsFromTransaction(context, txnWrapper, addrXpub);
         events.forEach((event) => {
           event.data = createEventData(event);
         });
+        const confirmations =
+          data.currentTick - txnWrapper.transaction.tickNumber;
         value.push({
-          timestamp: txData.timestamp,
-          sourceId: txData.txId,
+          timestamp: parseInt(txnWrapper.timestamp),
+          sourceId: txnWrapper.transaction.txId,
           sourceType: SourceTypes.TRANSACTION,
-          confirmations: txData.confirmations,
+          confirmations,
           events,
         });
       }
@@ -138,35 +168,121 @@ export async function eventLookup(
   }
 }
 
-function getEventsFromTransaction(txData: FlatTransfer, _addrXpub) {
+function getEventsFromTransaction(
+  context: CallContext,
+  tx: QubicTransactionsWrapper,
+  _addrXpub
+) {
   try {
-    const isIncoming = txData.recipient == _addrXpub;
-    const addrXpub = isIncoming ? txData.sender : txData.recipient;
-    const publicKey = "";
-    const alias = "";
+    const { logger } = context;
     const events: any[] = [];
-    switch (txData.type) {
-      case TYPE_PAYMENT:
+    // txn is incoming if we are NOT the sender
+    const isIncoming = tx.transaction.sourceId != _addrXpub;
+    switch (tx.transactionType) {
+      case "NATIVE_TRANSFER": {
+        // Incoming Qubic payment has RECEIVE event
         if (isIncoming) {
           const event = buildEventReceive(
-            { addrXpub, publicKey, alias },
+            { addrXpub: tx.transaction.sourceId, publicKey: "", alias: "" },
             AssetTypes.NATIVE,
             "0",
-            txData.amount,
+            tx.transaction.amount,
             0
           );
           events.push(event);
-        } else {
+        }
+        // Outgoing Qubic payment has SEND event
+        else {
           const event = buildEventSend(
-            { addrXpub, publicKey, alias },
+            { addrXpub: tx.transaction.destId, publicKey: "", alias: "" },
             AssetTypes.NATIVE,
             "0",
-            txData.amount,
+            tx.transaction.amount,
             0
           );
           events.push(event);
         }
         break;
+      }
+      case "QUTIL_SEND_MANY": {
+        if (!tx.qutilSendMany) {
+          logger.warn(
+            `EVENT_LOOKUP invalid response, QUTIL_SEND_MANY missing "qutilSendMany" for ${tx.transaction.txId}`
+          );
+          break;
+        }
+        // Incoming SENDMANY has one or more RECEIVE events
+        if (isIncoming) {
+          for (const transfer of tx.qutilSendMany.transfers) {
+            if (transfer.destId == _addrXpub) {
+              const event = buildEventReceive(
+                { addrXpub: tx.transaction.sourceId, publicKey: "", alias: "" },
+                AssetTypes.NATIVE,
+                "0",
+                transfer.amount,
+                0
+              );
+              events.push(event);
+            }
+          }
+        }
+        // Outgoing SENDMANY has many SEND events + 1 Fee event
+        else {
+          let total = new BigNumber(0);
+          for (const transfer of tx.qutilSendMany.transfers) {
+            total = total.plus(new BigNumber(transfer.amount))
+            const event = buildEventSend(
+              { addrXpub: transfer.destId, publicKey: "", alias: "" },
+              AssetTypes.NATIVE,
+              "0",
+              transfer.amount,
+              0
+            );
+            events.push(event);
+          }
+
+          let transactionAmount = new BigNumber(tx.transaction.amount)
+          let totalFee = transactionAmount.minus(total)
+          const event = buildEventFee(totalFee.toString(), AssetTypes.NATIVE, "0");
+          events.push(event);
+        }
+        break;
+      }
+      case "QX_ASSET_TRANSFER": {
+        if (!tx.qxAssetTransfer) {
+          logger.warn(
+            `EVENT_LOOKUP invalid response, QX_ASSET_TRANSFER missing "qxAssetTransfer" for ${tx.transaction.txId}`
+          );
+          break;
+        }
+        const assetId = `${tx.qxAssetTransfer.assetName}:${tx.qxAssetTransfer.assetIssuer}`;
+        // Incoming ASSET_TRANSFER has one RECEIVE event
+        if (isIncoming) {
+          const event = buildEventReceive(
+            { addrXpub: tx.transaction.sourceId, publicKey: "", alias: "" },
+            AssetTypes.TOKEN_TYPE_1,
+            assetId,
+            tx.qxAssetTransfer.amount,
+            0
+          );
+          events.push(event);
+        }
+        // Outgoing ASSET_TRANSFER has one SEND event and one FEE event
+        else {
+          const event = buildEventSend(
+            { addrXpub: tx.qxAssetTransfer.destId, publicKey: "", alias: "" },
+            AssetTypes.TOKEN_TYPE_1,
+            assetId,
+            tx.qxAssetTransfer.amount,
+            0
+          );
+          events.push(event);
+          events.push(
+            buildEventFee(tx.transaction.amount, AssetTypes.NATIVE, "0")
+          );
+        }
+        break;
+      }
     }
 
     return events;

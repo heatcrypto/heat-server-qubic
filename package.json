@@ -10,7 +10,9 @@
     "test-one": "mocha -r ts-node/register ",
     "test:block_lookup": "mocha --timeout 60000 -r ts-node/register test/block_lookup.test.ts",
     "test:network_status": "mocha --timeout 60000 -r ts-node/register test/network_status.test.ts",
-    "test:broadcast": "mocha --timeout 60000 -r ts-node/register test/broadcast.test.ts"
+    "test:broadcast": "mocha --timeout 60000 -r ts-node/register test/broadcast.test.ts",
+    "test:event_lookup": "mocha --timeout 60000 -r ts-node/register test/event_lookup.test.ts",
+    "test:token_discovery": "mocha --timeout 60000 -r ts-node/register test/token_discovery.test.ts"
   },
   "author": "dennis@heatledger.com",
   "license": "ISC",

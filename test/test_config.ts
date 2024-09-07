@@ -3,7 +3,7 @@ import { MonitoredRequest, CallContext, createLogger } from 'heat-server-common'
 /// Qubic
 export const testConfig = {
   protocol: 'https',
-  host: 'testapi.qubic.org'
+  host: 'qubic.tulipfox.com'
 }
 
 export function createContext(label?: string) {
